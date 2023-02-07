@@ -1,5 +1,3 @@
-# CS6650-Project1
-
 # Project Submissions Guidelines
 
 ## General guidelines
