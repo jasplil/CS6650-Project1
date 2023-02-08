@@ -12,9 +12,9 @@ public class PropertiesHandler {
      * Initialize client.PropertiesHandler
      */
     private PropertiesHandler() {
-        // read properties file
+        // reads properties file
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("sc.properties");
-        System.out.println("Read all properties");
+        System.out.println("All properties to be sent: ");
 
         // reads a property list
         try {
@@ -27,7 +27,7 @@ public class PropertiesHandler {
     /**
      * Create a new client.PropertiesHandler instance
      */
-    private static class InstanceKeeper {
+    private static class InstanceInit {
         private static final PropertiesHandler INSTANCE = new PropertiesHandler();
     }
 
@@ -36,7 +36,7 @@ public class PropertiesHandler {
      * @return instance of client.PropertiesHandler
      */
     public static PropertiesHandler getInstance() {
-        return InstanceKeeper.INSTANCE;
+        return InstanceInit.INSTANCE;
     }
 
     /**
@@ -45,7 +45,7 @@ public class PropertiesHandler {
      * @return value of a key value pair
      */
     public String getValue(String key){
-        System.out.println("returning key: "+key+ "and value: " + prop.getProperty(key));
+        System.out.println("returning key: "+ key + " and value: " + prop.getProperty(key));
         return prop.getProperty(key);
     }
 
