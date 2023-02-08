@@ -22,7 +22,7 @@ src
 ├── Readme.md
 ├── client
 │   ├── AbstractClient.java
-│   ├── Client.java
+│   ├── client.java
 │   ├── ClientApp.java
 │   ├── ClientLogger.java
 │   ├── TCPClient.java
