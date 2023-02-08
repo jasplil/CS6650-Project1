@@ -5,10 +5,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.*;
-import java.util.logging.Logger;
+import java.util.Arrays;
+import java.util.List;
+//import java.util.*;
+//import java.util.logging.Logger;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * A TCP client to send PUT, GET, DELETE operations to server.
@@ -18,9 +21,9 @@ public class TcpClient {
      * Change to dynamic port & host !!!
      */
     private static Socket socket;
-    private static int PORT = 8080;
+    private static int PORT = 2900;
     private static String HOST = "localhost";
-    private static Logger logger = Logger.getLogger(TcpClient.class.getName());
+    private static Logger logger = LogManager.getLogger(TcpClient.class.getName());
 
     /**
      * Function that is robust to server failure by using a timeout mechanism to deal with an
@@ -30,17 +33,18 @@ public class TcpClient {
     private static void ResFromServer(Socket client) {
         try {
             // Set timeout
-            client.setSoTimeout(Integer.valueOf(PropertiesHandler.getInstance().getValue("CLIENT_SOCKET_TIMEOUT")));
+            String timeOut = PropertiesHandler.getInstance().getValue("CLIENT_SOCKET_TIMEOUT");
+            client.setSoTimeout(Integer.parseInt(timeOut));
             // Get response from server
             DataInputStream inputStream = new DataInputStream(client.getInputStream());
             String ackMessage = inputStream.readUTF();
             logger.info("Acknowledgement message: " + ackMessage);
         } catch (SocketTimeoutException e) {
-            logger.info("Server is not responding. Timeout error has occurred.");
+            logger.error("Server is not responding. Timeout error has occurred.");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception exception) {
-            logger.info("There is an exception: " + exception);
+            logger.error("There is an exception: " + exception);
         }
     }
 
@@ -51,7 +55,7 @@ public class TcpClient {
         try {
             // Get pre-populated data
             String putData = PropertiesHandler.getInstance().getValue("TCP_PUT_REQUEST_DATA");
-            List<String> items = Arrays.asList(putData.split("\\s*\\|\\s*"));
+            String[] items = putData.split("\\s*\\|\\s*");
 
             DataOutputStream outputStream;
             Socket client;
@@ -60,7 +64,7 @@ public class TcpClient {
             for (String item : items) {
                 client = new Socket(HOST, PORT);
                 outputStream = new DataOutputStream(client.getOutputStream());
-//                logger.info("String items: " + item);
+                logger.info("String items: " + item);
                 outputStream.writeUTF("PUT " + item);
                 ResFromServer(client);
             }
@@ -74,8 +78,7 @@ public class TcpClient {
         Socket client = null;
 
         try {
-            List<String> items = Arrays.asList(getData.split("\\s*,\\s*"));
-
+            String[] items = getData.split("\\s*,\\s*");
             DataOutputStream outputStream;
 
             // Send 5 get requests
@@ -103,13 +106,12 @@ public class TcpClient {
         Socket client = null;
 
         try {
-            List<String> items = Arrays.asList(reqReqData.split("\\s*,\\s*"));
+            String[] items = reqReqData.split("\\s*,\\s*");
             DataOutputStream outputStream;
 
             for (String item : items) {
                 client = new Socket(HOST, PORT);
                 outputStream = new DataOutputStream(client.getOutputStream());
-//                logger.info("Delete items: " + item);
                 outputStream.writeUTF("DELETE " + item);
                 ResFromServer(client);
             }
@@ -124,7 +126,7 @@ public class TcpClient {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Put();
         Get();
         Delete();

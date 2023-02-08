@@ -10,7 +10,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/apache-log4j-2.19.0-bin/log4j-core-2.19.0.jar!/" />
+          <root url="jar://$USER_HOME$/Downloads/apache-log4j-2.19.0-bin/log4j-api-2.19.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -19,7 +19,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/Downloads/apache-log4j-2.19.0-bin/log4j-api-2.19.0.jar!/" />
+          <root url="jar://$USER_HOME$/Downloads/apache-log4j-2.19.0-bin/log4j-core-2.19.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

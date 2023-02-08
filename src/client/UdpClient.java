@@ -3,21 +3,22 @@ package client;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.logging.LogManager;
+//import java.util.logging.Logger;
 
 import org.apache.logging.log4j.*;
 /**
  * A UDP client to send PUT, GET, DELETE operations to server.
  */
 public class UdpClient {
-    private static Logger logger = Logger.getLogger(UdpClient.class.getName());
+    private static Logger logger = (Logger) LogManager.getLogManager().getLogger(UdpClient.class.getName());
     private static Socket socket;
     private static int PORT = 8080;
     private static String HOST = "localhost";
 
     private static void AckFromServer(DatagramSocket client) {
         try {
-            client.setSoTimeout(Integer.valueOf(PropertiesHandler.getInstance().getValue("CLIENT_SOCKET_TIMEOUT")));
+            client.setSoTimeout(Integer.parseInt(PropertiesHandler.getInstance().getValue("CLIENT_SOCKET_TIMEOUT")));
             byte[] ackMsgBuffer = new byte[500];
             DatagramPacket returnMsgPacket = new DatagramPacket(ackMsgBuffer, ackMsgBuffer.length);
             client.receive(returnMsgPacket);
@@ -33,11 +34,11 @@ public class UdpClient {
 
     private static void Put(InetAddress host, int portNumber) {
         String putReqData = PropertiesHandler.getInstance().getValue("UDP_PUT_REQUEST_DATA");
-        logger.info("put data in client: " + putReqData);
+        logger.debug("put data in client: " + putReqData);
         DatagramSocket client = null;
 
         try {
-            List<String> items = Arrays.asList(putReqData.split("\\s*\\|\\s*"));
+            String[] items = putReqData.split("\\s*\\|\\s*");
             for (String tokens : items) {
                 client = new DatagramSocket();
                 logger.info("Message String items: " + tokens);
@@ -60,7 +61,7 @@ public class UdpClient {
         logger.info("get data in client: " + reqReqData);
         DatagramSocket client = null;
         try {
-            List<String> items = Arrays.asList(reqReqData.split("\\s*,\\s*"));
+            String[] items = reqReqData.split("\\s*,\\s*");
             for (String tokens : items) {
                 client = new DatagramSocket();
                 logger.info("Message String items: " + tokens);
@@ -84,7 +85,7 @@ public class UdpClient {
         logger.info("get delete data in client: " + reqReqData);
         DatagramSocket client = null;
         try {
-            List<String> items = Arrays.asList(reqReqData.split("\\s*,\\s*"));
+            String[] items = reqReqData.split("\\s*,\\s*");
             for (String tokens : items) {
                 client = new DatagramSocket();
                 logger.info("Message String items: " + tokens);
@@ -110,8 +111,6 @@ public class UdpClient {
             Get(host,PORT);
             Delete(host,PORT);
         } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
 

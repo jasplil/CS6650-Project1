@@ -5,10 +5,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
-import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * A TCP server to receive operations of PUT, GET, DELETE from client.
@@ -16,8 +17,8 @@ import org.apache.logging.log4j.*;
 public class TcpServer {
     private static ServerSocket serverSocket;
     private static Socket client;
-    private static int PORT = 8080;
-    private static java.util.logging.Logger logger = Logger.getLogger(TcpServer.class.getName());
+    private static int PORT = 2900;
+    private static Logger logger = LogManager.getLogger(TcpServer.class.getName());
 
     private static void AnsToClient(Socket client, String requestType, String key, String returnMsg) {
         logger.info("Sending acknowledgement to client...");
@@ -25,7 +26,7 @@ public class TcpServer {
         try {
             DataOutputStream outStream = new DataOutputStream(client.getOutputStream());
 
-            if (returnMsg != "" && requestType.equalsIgnoreCase("GET")) {
+            if (!returnMsg.equals("") && requestType.equalsIgnoreCase("GET")) {
                 outStream.writeUTF("Retrieved message with key: " + key + " is: " + returnMsg);
             } else {
                 outStream.writeUTF(requestType + " with key: " + key + " SUCCESS");
@@ -44,10 +45,10 @@ public class TcpServer {
     private static void Put(Socket client, String content, Map<String, String> storeMap) {
         logger.info("PUT request received from " + client.getInetAddress() + " at Port " + client.getPort());
 
-        if (content != "") {
+        if (!content.equals("")) {
             String key = content.substring(0, content.indexOf(","));
             String message = content.substring(content.indexOf(","));
-            if (key != "") {
+            if (!key.equals("")) {
                 logger.info("The request is to store a message with key: " + key);
                 storeMap.put(key, message);
                 AnsToClient(client,"PUT", key, "");
@@ -68,23 +69,16 @@ public class TcpServer {
     private static void Get(Socket client, String content, Map<String, String> storeMap) {
         logger.info("GET request received from " + client.getInetAddress() + " at Port " + client.getPort());
 
-        if (content != "") {
-            String key = content;
-
-            if (key != "") {
-                logger.info(" Requesting to get a message with key: " + key);
-                if (storeMap.containsKey(key)) {
-                    String retrievedMsg = storeMap.get(key);
-                    AnsToClient(client, "GET", key, retrievedMsg);
-                } else {
-                    logger.info("There exist no key-value pair for key: " + key);
-                }
+        if (!content.equals("")) {
+            logger.info(" Requesting to get a message with key: " + content);
+            if (storeMap.containsKey(content)) {
+                String retrievedMsg = storeMap.get(content);
+                AnsToClient(client, "GET", content, retrievedMsg);
             } else {
-                logger.info("Received a wrong request of length: " + content.length() + " from: "
-                        + client.getInetAddress() + " at Port: " + client.getPort());
+                logger.info("There exist no key-value pair for key: " + content);
             }
         } else {
-            logger.info("The content is not found.");
+            logger.error("Received a wrong request from: " + client.getInetAddress() + " at Port: " + client.getPort());
         }
 
         try {
@@ -97,19 +91,14 @@ public class TcpServer {
     private static void Delete(Socket client, String msgContent, Map<String, String> storeMap) {
         logger.info(" DELETE request received from " + client.getInetAddress() + " at Port " + client.getPort());
 
-        if (msgContent != "") {
-            String key = msgContent;
-            if (key != "") {
-                logger.info(" Requesting to delete a message with key: " + key);
-                if (storeMap.containsKey(key)) {
-                    storeMap.remove(key);
-                    AnsToClient(client, "DELETE", key, "");
-                } else {
-                    logger.info("There exists no key-value pair for key: " + key);
-                }
-
+        if (!msgContent.equals("")) {
+//            String key = msgContent;
+            logger.info(" Requesting to delete a message with key: " + msgContent);
+            if (storeMap.containsKey(msgContent)) {
+                storeMap.remove(msgContent);
+                AnsToClient(client, "DELETE", msgContent, "");
             } else {
-                logger.info("Received a wrong request of length: " + msgContent.length() + " from: " + client.getInetAddress() + " at Port: " + client.getPort());
+                logger.info("There exists no key-value pair for key: " + msgContent);
             }
         } else {
             logger.info("The searched message content is not present.");
@@ -122,7 +111,7 @@ public class TcpServer {
 
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Map<String, String> map = new HashMap<>();
 
         try {
@@ -135,22 +124,21 @@ public class TcpServer {
                 DataInputStream input = new DataInputStream(client.getInputStream());
                 String clientMessage = input.readUTF();
 
-                if (clientMessage != "") {
+                if (!clientMessage.equals("")) {
                     String requestType = clientMessage.substring(0, clientMessage.indexOf(" "));
                     String msgContent = clientMessage.substring(clientMessage.indexOf(" "));
-                    logger.info("requestType: " + requestType + " msgContent" + msgContent);
+                    logger.info("Request type: " + requestType + " Message content" + msgContent);
 
-                    if (requestType != "" && requestType.equalsIgnoreCase("PUT")) {
+                    if (requestType.equalsIgnoreCase("PUT")) {
                         Put(client, msgContent, map);
-                    } else if (requestType != "" && requestType.equalsIgnoreCase("GET")) {
+                    } else if (requestType.equalsIgnoreCase("GET")) {
                         Get(client, msgContent, map);
-                    } else if (requestType != "" && requestType.equalsIgnoreCase("DELETE")) {
+                    } else if (requestType.equalsIgnoreCase("DELETE")) {
                         Delete(client, msgContent, map);
                     } else {
                         logger.info("Received unsolicited response acknowledging unknown: "+ requestType);
                     }
-
-                    logger.info("current Map size is: " + map.size());
+                    logger.debug("current Map size is: " + map.size());
                 }
             }
         } catch (IOException e) {
