@@ -19,4 +19,3 @@ src
 └── server
     ├── TCPHandler.java
     └── UDPHandler.java
-└── sc.properties
