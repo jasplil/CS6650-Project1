@@ -5,10 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.List;
-//import java.util.*;
-//import java.util.logging.Logger;
+import java.util.Scanner;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -17,12 +14,6 @@ import org.apache.logging.log4j.LogManager;
  * A TCP client to send PUT, GET, DELETE operations to server.
  */
 public class TcpClient {
-    /**
-     * Change to dynamic port & host !!!
-     */
-    private static Socket socket;
-    private static int PORT = 2900;
-    private static String HOST = "localhost";
     private static Logger logger = LogManager.getLogger(TcpClient.class.getName());
 
     /**
@@ -35,12 +26,14 @@ public class TcpClient {
             // Set timeout
             String timeOut = PropertiesHandler.getInstance().getValue("CLIENT_SOCKET_TIMEOUT");
             client.setSoTimeout(Integer.parseInt(timeOut));
+
             // Get response from server
             DataInputStream inputStream = new DataInputStream(client.getInputStream());
             String ackMessage = inputStream.readUTF();
+
             logger.info("Acknowledgement message: " + ackMessage);
         } catch (SocketTimeoutException e) {
-            logger.error("Server is not responding. Timeout error has occurred.");
+            logger.error("Server is not responding. Timeout error occurred.");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception exception) {
@@ -51,7 +44,7 @@ public class TcpClient {
     /**
      * Sends 5 PUT operations to server
      */
-    public static void Put() {
+    public static void Put(String HOST, int PORT) {
         try {
             // Get pre-populated data
             String putData = PropertiesHandler.getInstance().getValue("TCP_PUT_REQUEST_DATA");
@@ -73,7 +66,7 @@ public class TcpClient {
         }
     }
 
-    private static void Get() {
+    private static void Get(String HOST, int PORT) {
         String getData = PropertiesHandler.getInstance().getValue("TCP_GET_REQUEST_DATA");
         Socket client = null;
 
@@ -85,7 +78,6 @@ public class TcpClient {
             for (String item : items) {
                 client = new Socket(HOST, PORT);
                 outputStream = new DataOutputStream(client.getOutputStream());
-//                logger.info("Get items: " + item);
                 outputStream.writeUTF("GET " + item);
                 ResFromServer(client);
             }
@@ -100,13 +92,13 @@ public class TcpClient {
         }
     }
 
-    private static void Delete() {
-        String reqReqData = PropertiesHandler.getInstance().getValue("TCP_DEL_REQUEST_DATA");
-        logger.info("deleting data in clients array: " + reqReqData);
+    private static void Delete(String HOST, int PORT) {
+        String delData = PropertiesHandler.getInstance().getValue("TCP_DEL_REQUEST_DATA");
+        logger.info("Deleting data in clients array: " + delData);
         Socket client = null;
 
         try {
-            String[] items = reqReqData.split("\\s*,\\s*");
+            String[] items = delData.split("\\s*,\\s*");
             DataOutputStream outputStream;
 
             for (String item : items) {
@@ -126,9 +118,19 @@ public class TcpClient {
         }
     }
 
-    public static void main(String[] args) {
-        Put();
-        Get();
-        Delete();
+    public static void main(String[] args) throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please enter the port number:");
+        int PORT = scanner.nextInt();
+
+        scanner = new Scanner(System.in);
+        System.out.println("Please enter the hostname/Local ip:");
+        String HOST = scanner.nextLine();
+
+        if (PORT < 0) throw new IOException("Port number should be larger than 0");
+
+        Put(HOST, PORT);
+        Get(HOST, PORT);
+        Delete(HOST, PORT);
     }
 }

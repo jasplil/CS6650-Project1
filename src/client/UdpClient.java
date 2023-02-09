@@ -2,19 +2,16 @@ package client;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.*;
-import java.util.logging.LogManager;
-//import java.util.logging.Logger;
+import java.util.Scanner;
 
 import org.apache.logging.log4j.*;
+
 /**
  * A UDP client to send PUT, GET, DELETE operations to server.
  */
 public class UdpClient {
-    private static Logger logger = (Logger) LogManager.getLogManager().getLogger(UdpClient.class.getName());
-    private static Socket socket;
+    private static Logger logger = LogManager.getLogger(UdpClient.class.getName());
     private static int PORT = 8080;
-    private static String HOST = "localhost";
 
     private static void AckFromServer(DatagramSocket client) {
         try {
@@ -24,7 +21,7 @@ public class UdpClient {
             client.receive(returnMsgPacket);
             logger.info("Acknowledgement message: " + new String(returnMsgPacket.getData()));
         } catch (SocketTimeoutException e) {
-            logger.info("Server is not responding. Timeout error has occurred.");
+            logger.info("Server is not responding. Timeout error occurred.");
         } catch (IOException e) {
             logger.info("An exception has occurred: " + e);
         } catch (Exception ex) {
@@ -33,22 +30,22 @@ public class UdpClient {
     }
 
     private static void Put(InetAddress host, int portNumber) {
-        String putReqData = PropertiesHandler.getInstance().getValue("UDP_PUT_REQUEST_DATA");
-        logger.debug("put data in client: " + putReqData);
+        String putData = PropertiesHandler.getInstance().getValue("UDP_PUT_REQUEST_DATA");
+        logger.debug("Put data in client: " + putData);
         DatagramSocket client = null;
 
         try {
-            String[] items = putReqData.split("\\s*\\|\\s*");
+            String[] items = putData.split("\\s*\\|\\s*");
+
             for (String tokens : items) {
                 client = new DatagramSocket();
                 logger.info("Message String items: " + tokens);
                 String clientMsg = "PUT " + tokens;
-                DatagramPacket clientMsgPacket = new DatagramPacket(clientMsg.getBytes(),clientMsg.length(),host,portNumber);
+                DatagramPacket clientMsgPacket = new DatagramPacket(clientMsg.getBytes(), clientMsg.length(), host, portNumber);
                 client.send(clientMsgPacket);
                 AckFromServer(client);
                 client.close();
             }
-
         } catch (IOException e) {
             logger.info("An exception has occurred: " + e);
         } finally {
@@ -57,11 +54,11 @@ public class UdpClient {
     }
 
     private static void Get(InetAddress host, int portNumber) {
-        String reqReqData = PropertiesHandler.getInstance().getValue("UDP_GET_REQUEST_DATA");
-        logger.info("get data in client: " + reqReqData);
+        String getData = PropertiesHandler.getInstance().getValue("UDP_GET_REQUEST_DATA");
+        logger.info("Get data in client: " + getData);
         DatagramSocket client = null;
         try {
-            String[] items = reqReqData.split("\\s*,\\s*");
+            String[] items = getData.split("\\s*,\\s*");
             for (String tokens : items) {
                 client = new DatagramSocket();
                 logger.info("Message String items: " + tokens);
@@ -81,15 +78,15 @@ public class UdpClient {
     }
 
     private static void Delete(InetAddress host, int portNumber) {
-        String reqReqData = PropertiesHandler.getInstance().getValue("UDP_DEL_REQUEST_DATA");
-        logger.info("get delete data in client: " + reqReqData);
+        String delData = PropertiesHandler.getInstance().getValue("UDP_DEL_REQUEST_DATA");
+        logger.info("Delete data in client: " + delData);
         DatagramSocket client = null;
         try {
-            String[] items = reqReqData.split("\\s*,\\s*");
+            String[] items = delData.split("\\s*,\\s*");
             for (String tokens : items) {
                 client = new DatagramSocket();
                 logger.info("Message String items: " + tokens);
-                String clientMsg = "DEL " + tokens;
+                String clientMsg = "DELETE" + tokens;
                 DatagramPacket clientMsgPacket = new DatagramPacket(clientMsg.getBytes(),clientMsg.length(),host,portNumber);
                 client.send(clientMsgPacket);
                 AckFromServer(client);
@@ -104,7 +101,13 @@ public class UdpClient {
 
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        // Get port from console
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Please enter the port number:");
+        PORT = scanner.nextInt();
+        if (PORT < 0) throw new IOException("Port number should be larger than 0");
+
         try {
             InetAddress host = InetAddress.getByName("localhost");
             Put(host, PORT);
@@ -113,6 +116,5 @@ public class UdpClient {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-
     }
 }

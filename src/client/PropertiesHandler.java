@@ -14,8 +14,6 @@ public class PropertiesHandler {
     private PropertiesHandler() {
         // reads properties file
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("sc.properties");
-        System.out.println("All properties to be sent: ");
-
         // reads a property list
         try {
             prop.load(in);
@@ -45,7 +43,6 @@ public class PropertiesHandler {
      * @return value of a key value pair
      */
     public String getValue(String key){
-        System.out.println("returning key: "+ key + " and value: " + prop.getProperty(key));
         return prop.getProperty(key);
     }
 

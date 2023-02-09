@@ -2,23 +2,23 @@ package server;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.*;
-import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class UdpServer {
-    private static ServerSocket serverSocket;
-    private static Socket client;
     private static int PORT = 8080;
-    private static Logger LOGGER = Logger.getLogger(UdpServer.class.getName());
+    private static Logger LOGGER = LogManager.getLogger(UdpServer.class.getName());
 
-    private static void AckToClient(DatagramSocket socket, DatagramPacket request, String requestType, String key, String returnMsg) {
-        LOGGER.info("Sending acknowledgement to client...");
+    private static void AnsToClient(DatagramSocket socket, DatagramPacket request, String requestType, String key, String returnMsg) {
+        LOGGER.info("Sending acknowledgement to client");
         try {
             byte[] ackMessage = new byte[500];
             if (returnMsg != "" && requestType.equalsIgnoreCase("GET")) {
-                ackMessage = ("Retrieved message with key: " + key + " is: " + returnMsg).getBytes();
+                ackMessage = ("Received with key: " + key + " value: " + returnMsg).getBytes();
             } else {
                 ackMessage = (requestType + " with key: " + key + " SUCCESS").getBytes();
             }
@@ -27,12 +27,12 @@ public class UdpServer {
             socket.send(ackMsgPacket);
 
         } catch (IOException e) {
-            LOGGER.info("An exception has occured: " + e);
+            LOGGER.info("Exception: " + e);
         }
 
     }
 
-    private static void sendFailureAckToClient(DatagramSocket socket, DatagramPacket request, String returnMsg) {
+    private static void sendFailureAnsToClient(DatagramSocket socket, DatagramPacket request, String returnMsg) {
         LOGGER.info("Sending acknowledgement to client for failure...");
         try {
             byte[] ackMessage = new byte[500];
@@ -57,17 +57,16 @@ public class UdpServer {
             if (key != "") {
                 LOGGER.info("The request is to store a message with key: " + key + " and Message" + message);
                 messageStoreMap.put(key.trim(), message);
-                AckToClient(socket, clientPacket, "PUT", key, "");
+                AnsToClient(socket, clientPacket, "PUT", key, "");
             } else {
-                String failureMsg = "Received a malformed request of length: " + clientPacket.getLength() + " from: "
-                        + clientPacket.getAddress() + " at Port: " + clientPacket.getPort();
-                LOGGER.info(failureMsg);
-                sendFailureAckToClient(socket, clientPacket, failureMsg);
+                String failureMsg = "Received a malformed request of length: " + clientPacket.getLength() + " from: " + clientPacket.getAddress() + " at Port: " + clientPacket.getPort();
+                LOGGER.error(failureMsg);
+                sendFailureAnsToClient(socket, clientPacket, failureMsg);
             }
         } else {
             String failureMsg = "The message content is not present.";
             LOGGER.info(failureMsg);
-            sendFailureAckToClient(socket, clientPacket, failureMsg);
+            sendFailureAnsToClient(socket, clientPacket, failureMsg);
         }
     }
 
@@ -82,24 +81,24 @@ public class UdpServer {
                 LOGGER.info("The request is to get a message with key: " + key);
                 if (messageStoreMap.containsKey(key.trim())) {
                     String retrievedMsg = messageStoreMap.get(key.trim());
-                    AckToClient(socket, clientPacket, "GET", key, retrievedMsg);
+                    AnsToClient(socket, clientPacket, "GET", key, retrievedMsg);
                 } else {
                     String failureMsg = "There is no key-value pair for key: " + key;
-                    LOGGER.info(failureMsg);
-                    sendFailureAckToClient(socket, clientPacket, failureMsg);
+                    LOGGER.error(failureMsg);
+                    sendFailureAnsToClient(socket, clientPacket, failureMsg);
                 }
 
             } else {
                 String failureMsg = "Received a malformed request of length: " + clientPacket.getLength() + " from: "
                         + clientPacket.getAddress() + " at Port: " + clientPacket.getPort();
-                LOGGER.info(failureMsg);
-                sendFailureAckToClient(socket, clientPacket, failureMsg);
+                LOGGER.error(failureMsg);
+                sendFailureAnsToClient(socket, clientPacket, failureMsg);
             }
 
         } else {
             String failureMsg = "The message content is not present.";
-            LOGGER.info(failureMsg);
-            sendFailureAckToClient(socket, clientPacket, failureMsg);
+            LOGGER.error(failureMsg);
+            sendFailureAnsToClient(socket, clientPacket, failureMsg);
         }
 
     }
@@ -116,24 +115,24 @@ public class UdpServer {
                 LOGGER.info("The request is to get a message with key: " + key);
                 if (messageStoreMap.containsKey(key.trim())) {
                     messageStoreMap.remove(key.trim());
-                    AckToClient(socket, clientPacket, "DEL", key, "");
+                    AnsToClient(socket, clientPacket, "DEL", key, "");
                 } else {
                     String failureMsg = "There exist no such key-value pair for key: " + key;
                     LOGGER.info(failureMsg);
-                    sendFailureAckToClient(socket, clientPacket, failureMsg);
+                    sendFailureAnsToClient(socket, clientPacket, failureMsg);
                 }
 
             } else {
                 String failureMsg = "Received a malformed request of length: " + clientPacket.getLength() + " from: "
                         + clientPacket.getAddress() + " at Port: " + clientPacket.getPort();
                 LOGGER.info(failureMsg);
-                sendFailureAckToClient(socket, clientPacket, failureMsg);
+                sendFailureAnsToClient(socket, clientPacket, failureMsg);
             }
 
         } else {
             String failureMsg = "The message content is not present.";
             LOGGER.info(failureMsg);
-            sendFailureAckToClient(socket, clientPacket, failureMsg);
+            sendFailureAnsToClient(socket, clientPacket, failureMsg);
         }
 
     }
@@ -143,12 +142,17 @@ public class UdpServer {
 
         DatagramSocket socket;
         try {
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Please enter the port number:");
+            PORT = scanner.nextInt();
+            if (PORT < 0) throw new IOException("Port number should be larger than 0");
+
             socket = new DatagramSocket(PORT);
 
-            byte[] msgbuffer = new byte[500];
+            byte[] buffer = new byte[500];
 
             while (true) {
-                DatagramPacket dataPacket = new DatagramPacket(msgbuffer, msgbuffer.length);
+                DatagramPacket dataPacket = new DatagramPacket(buffer, buffer.length);
                 socket.receive(dataPacket);
                 System.out.println("Message from client: " + new String(dataPacket.getData()));
                 String clientMessage = new String(dataPacket.getData());
@@ -165,7 +169,6 @@ public class UdpServer {
                         LOGGER.info("Unknown request type: " + requestType + " is received.");
                     }
                 }
-                LOGGER.info("current Map size is: " + messageStoreMap.size());
             }
         } catch (SocketException e) {
             e.printStackTrace();
