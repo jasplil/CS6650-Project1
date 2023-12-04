@@ -6,19 +6,19 @@ The client must take the hostname or IP address of the server and its port numbe
 
 The server must take the port number as a command-line argument and must run forever, displaying requests and responses in a human-readable fashion. The server must be robust to malformed datagram packets and must timestamp every line printed to the log. There must be two instances of the client and server, one for each protocol.
 ## Project highlights
-###Logging
+## Logging
 The assignment requires the client and server to log their activities in a human-readable format. We need to decide what information to log in the console and how it should be displayed.
 
-###Network Communication
+### Network Communication
 The assignment requires the client and server to communicate using two distinct L4 communication protocols, UDP and TCP. We need to have a good understanding of socket programming and how to encode and decode packets using the two protocols.
 
-###Robustness
+### Robustness
 The assignment requires the client and server to be robust to malformed or incorrect data packets, which could cause the program to crash. We need to carefully consider how to handle these cases and provide error messages in a human-readable format.
 
-###Protocol Design
+### Protocol Design
 To design a simple protocol to communicate packet contents between the client and server. This requires careful consideration of the data that needs to be transmitted, the format of the data, and how it will be interpreted by the receiver.
 
-###Timestamping
+### Timestamping
 The assignment requires the client and server to log every request and response with a timestamp. We need to decide how to format the timestamp and ensure that it is displayed with millisecond precision.
 
 ## Instructions to run
